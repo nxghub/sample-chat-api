@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Application</title>
+</head>
+<body>
+<div id="chat-messages"></div>
+<input type="text" id="message-input">
+<button onclick="sendMessage()">Send</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    var socket = new WebSocket("ws://localhost:8080/chat"); // Connect to the WebSocket endpoint
+
+    var stompClient = Stomp.over(socket); // Create a STOMP client to communicate over WebSocket
+
+    stompClient.connect({}, function(frame) {
+        stompClient.subscribe("/topic/messages", function(response) {
+            var message = JSON.parse(response.body); // Parse the message from JSON format
+            document.getElementById("chat-messages").innerHTML += "<p>" + message.sender + ": " + message.content + "</p>";
+        });
+    });
+
+    function sendMessage() {
+        var messageInput = document.getElementById("message-input");
+        var message = messageInput.value;
+        stompClient.send("/app/chat", {}, JSON.stringify({ 'content': message, 'sender': 'User' })); // Send message to server
+        messageInput.value = "";
+    }
+</script>
+</body>
+</html>
